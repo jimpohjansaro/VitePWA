@@ -68,11 +68,31 @@ const login = async (): Promise<LoginUser | null> => {
   return result;
 };
 
-// TODO: function to update user data
+// UPDATEUSERDATA
 const updateUserData = async (
   user: UpdateUser,
   token: string
-): Promise<UpdateResult> => {};
+): Promise<UpdateResult> => {
+  if (!profileUsernameInput || !profileEmailInput) {
+    throw new Error('Elementtejä ei ole');
+  }
+
+  const options: RequestInit = {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Auhtorization: 'Bearer ' + token,
+    },
+    body: JSON.stringify(user),
+  };
+
+  const updateResult = await fetchData<UpdateResult>(
+    apiUrl + '/users',
+    options
+  );
+
+  return updateResult;
+};
 
 // TODO: function to add userdata (email, username and avatar image) to the
 // Profile DOM and Edit Profile Form
@@ -81,13 +101,19 @@ const addUserDataToDom = (user: User): void => {
     return;
   }
 
-  emailTarget.innerHTML = user.email;
-  usernameTarget.innerHTML = user.username;
+  emailTarget.innerText = user.email;
+  usernameTarget.innerText = user.username;
   avatarTarget.src = uploadUrl + user.avatar;
 };
 
 // function to get userdata from API using token
-const getUserData = async (token: string): Promise<User> => {};
+const getUserData = async (token: string): Promise<User> => {
+  const options: RequestInit = {
+    headers: {
+      Authorization: 'Bearer' + token,
+    },
+  };
+};
 
 // TODO: function to check local storage for token and if it exists fetch
 // userdata with getUserData then update the DOM with addUserDataToDom
@@ -118,7 +144,37 @@ loginForm &&
 // event listener should call updateUserData function and update the DOM with
 // the user data by calling addUserDataToDom or checkToken
 
-// TODO: avatar form event listener
+if (profileForm) {
+  profileForm.addEventListener('submit', async (evt) => {
+    try {
+      evt.preventDefault();
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No token, login');
+        return;
+      }
+
+      if (!profileUsernameInput || !profileEmailInput) {
+        throw new Error('Elementtejä ei ole');
+      }
+
+      const username = profileUsernameInput.value;
+      const email = profileEmailInput.value;
+
+      const data = {
+        username,
+        email,
+      };
+
+      const userResponse = await updateUserData(data, token);
+
+      addUserDataToDom(userResponse.data);
+      alert('UPDATE OK');
+    } catch (error) {
+      console.log((error as Error).message);
+    }
+  });
+}
 
 // event listener should call uploadAvatar function and update the DOM with
 // the user data by calling addUserDataToDom or checkToken
